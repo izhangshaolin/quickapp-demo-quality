@@ -35,12 +35,17 @@
           <text>{{$item.title}} : {{$item.name}}</text>
         </div>
       </div>
+      <div class="page-summary-desc" v-if="hasIstanbulCoverage" @click="saveIstanbulCoverageData" style="background-color: #d9d7d6; margin-top: 60px;">
+        <text>保存代码覆盖率数据</text>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
   import router from '@system.router'
+  import fetch from '@system.fetch'
+  import prompt from '@system.prompt'
 
   import {
     autoCaseList
@@ -62,6 +67,9 @@
     })
   }
 
+  function checkIstanbulCoverage () {
+    return !!global.__coverage__
+  }
   export default {
     private: {
       // 包含自动测试脚本的case列表
@@ -69,7 +77,8 @@
       pageTestList: [],
       shouldTestAll: false,
       showCompletedText: false,
-      isRunningTest: false
+      isRunningTest: false,
+      hasIstanbulCoverage: false
     },
     created() {
       this.pageNameList = autoCaseList
@@ -77,6 +86,8 @@
       if (global.loadData) {
         global.saveData('pageNameList', this.pageNameList)
       }
+
+      this.hasIstanbulCoverage = checkIstanbulCoverage()
     },
     onShow() {
       // 更新pageTestList
@@ -147,7 +158,30 @@
         },
         togglePageErrStackStatus($item) {
             $item.showPageTestErrDetail = !$item.showPageTestErrDetail
-        }
+        },
+        saveIstanbulCoverageData () {
+        // 代码覆盖率的数据
+          const dataCoverage = global.__coverage__
+          console.log(dataCoverage)
+          // TODO：记得更新到您的PC服务器地址
+          fetch.fetch({
+            url: `http://10.221.68.41:8001/data/coverage`,
+            method: 'POST',
+            data: {
+              coverage: dataCoverage
+            },
+            header: {
+              'Content-Type': 'application/json'
+            },
+            success: () => {
+              prompt.showToast({ message: `保存成功` })
+
+            },
+            fail: (err) => {
+              prompt.showToast({ message: `保存失败：${JSON.stringify(err)}` })
+            }
+        })
+    }
     }
   }
 </script>

@@ -11,6 +11,7 @@
     "server": "hap server",
     "watch": "hap watch",
     "build:test": "NODE_TEST=Y npm run build -- --devtool=source-map --enable-e2e --match-sourcemap",
+    "build:test:istanbul": "npm run build:test -- --enable-istanbul",
     "watch:test": "NODE_TEST=Y npm run watch -- --devtool=source-map --enable-e2e --match-sourcemap"
   },
   "devDependencies": {
@@ -18,10 +19,12 @@
     "eslint": "^6.8.0",
     "eslint-plugin-hybrid": "0.0.5",
     "hap-toolkit": "^0.6.12",
+    "istanbul-instrumenter-loader": "^3.0.1",
     "quickapp-dsls": "^0.1.1"
   },
   "dependencies": {
     "hybrid-chai": "0.0.1",
-    "hybrid-mocha": "0.0.2"
+    "hybrid-mocha": "0.0.2",
+    "nyc": "^15.0.0"
   }
 }
