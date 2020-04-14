@@ -1,0 +1,216 @@
+<template>
+     <div class="page-summary-root">
+    <div style="flex-direction: column;">
+      <div class="page-summary-desc" @click="restartTestProcess()">
+        <text>点击重新测试</text>
+      </div>
+      <div class="page-item" v-for="$item in pageTestList">
+        <div class="page-item-summary">
+          <text class="page-item-summary-num-name">
+            <span>{{$item.stats.title}}</span>
+          </text>
+          <text @click="togglePageTestDetailStatus($item)">
+            <span class="page-item-summary-num-total">结果:{{$item.stats.tests}}:</span>
+            <span class="page-item-summary-num-pass">({{$item.stats.passes}}:</span>
+            <span class="page-item-summary-num-fail">{{$item.stats.failures}})</span>
+          </text>
+        </div>
+        <div class="page-item-caselist" v-show="!!$item.showPageTestDetail">
+          <div class="case-item" v-bind:class="[$item.err && !$item.err.message ? 'case-item-pass' : 'case-item-fail' ]" v-for="item in $item.tests">
+            <text class="case-item-title" @click="togglePageErrStackStatus($item)">{{item.title}}</text>
+            <text v-if="item.err.message" v-show="!!$item.showPageTestErrDetail">{{item.err.stack}}</text>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-summary-desc" v-show="showCompletedText" style="background-color: #d9d7d6;">
+        <text>所有测试已结束</text>
+      </div>
+
+      <div class="page-summary-desc" style="background-color: #d9d7d6; margin-top: 60px;">
+        <text>测试的页面列表</text>
+      </div>
+      <div class="page-item" v-for="$item in pageNameList">
+        <div class="page-item-summary" @click="gotoPage($item.name, $item.params)">
+          <text>{{$item.title}} : {{$item.name}}</text>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import router from '@system.router'
+
+  import {
+    autoCaseList
+  } from '../../test/autocase'
+
+  /**
+   * 获取下一个自动测试的page
+   */
+  function findNextTestPage() {
+    const list = global.loadData('pageNameList')
+    const item = list.shift()
+    global.saveData('pageNameList', list)
+    return item
+  }
+
+  function waitForOK(time = 100) {
+    return new Promise(resolve => {
+      setTimeout(resolve, time)
+    })
+  }
+
+  export default {
+    private: {
+      // 包含自动测试脚本的case列表
+      pageNameList: [],
+      pageTestList: [],
+      shouldTestAll: false,
+      showCompletedText: false,
+      isRunningTest: false
+    },
+    created() {
+      this.pageNameList = autoCaseList
+      // 初始化自动化测试相关数据
+      if (global.loadData) {
+        global.saveData('pageNameList', this.pageNameList)
+      }
+    },
+    onShow() {
+      // 更新pageTestList
+      this.pageTestList = (global.loadData('pageTestList') || []).map(item => {
+        item.showPageTestDetail = false
+        item.tests.forEach(itemCase => {
+          itemCase.showPageTestErrDetail = false
+        })
+        return item
+      })
+      this.shouldTestAll && this.startNextTestPage()
+    },
+    /**
+     * 重启整个所有测试
+     */
+    methods: {
+        restartTestProcess() {
+            // 防止连续多次点击
+            if (!this.isRunningTest) {
+                this.isRunningTest = true
+                global.saveData('pageNameList', this.pageNameList)
+                global.saveData('pageTestList', [])
+
+                this.pageTestList = []
+                // 重置测试结束文本的显示状态
+                this.showCompletedText = false
+                // 自动跑测试下一个测试用例
+                this.shouldTestAll = true
+                // 启动下个测试用例
+                this.startNextTestPage()
+            }
+        },
+            /**
+             * 启动下个测试用例
+             */
+        async startNextTestPage() {
+            const pageItem = findNextTestPage()
+            if (pageItem) {
+                console.info(`下个测试用例：${pageItem.title}：${pageItem.name}`)
+
+                await waitForOK(1000)
+                console.info(`开始测试页面：${pageItem.title}：${pageItem.name}`)
+                router.push({
+                uri: pageItem.name,
+                params: pageItem.params
+                })
+            } else {
+                console.info(`测试用例列表执行完毕`)
+
+                this.isRunningTest = false
+                this.showCompletedText = true
+                this.shouldTestAll = false
+            }
+        },
+        gotoPage(path, params) {
+            // 单个页面的点击跳转：不会在测试后，自动返回
+            params = Object.assign({
+                back: 'false'
+            }, params)
+
+            router.push({
+                uri: path,
+                params
+            })
+        },
+        togglePageTestDetailStatus($item) {
+            $item.showPageTestDetail = !$item.showPageTestDetail
+        },
+        togglePageErrStackStatus($item) {
+            $item.showPageTestErrDetail = !$item.showPageTestErrDetail
+        }
+    }
+  }
+</script>
+
+
+
+<style>
+  .page-summary-root {
+    background-color: #fbf9fe;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .page-summary-desc {
+    padding: 20px;
+    justify-content: center;
+    background-color: #ffe4c4;
+  }
+
+  .page-item {
+    flex-direction: column;
+  }
+
+  .page-item-summary {
+    padding: 20px;
+    background-color: #efebc6;
+  }
+
+  .page-item-summary-num-name {
+    font-weight: bold;
+    margin-right: 40px;
+  }
+
+  .page-item-summary-num-total {
+    margin-right: 20px;
+  }
+
+  .page-item-summary-num-pass {
+    margin-right: 20px;
+    color: #008000;
+  }
+
+  .page-item-summary-num-fail {
+    margin-right: 20px;
+    color: #FF0000;
+  }
+
+  .page-item-caselist {
+    flex-direction: column;
+    margin-top: 10px;
+  }
+
+  .case-item {
+    flex-direction: column;
+    padding: 10px 50px;
+    margin-bottom: 5px;
+  }
+
+  .case-item-pass {
+    background-color: #008000;
+  }
+
+  .case-item-fail {
+    background-color: #FF0000;
+  }
+</style>
