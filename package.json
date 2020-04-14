@@ -1,0 +1,27 @@
+{
+  "name": "quickapp-vue-quality",
+  "version": "1.0.0",
+  "subversion": {
+    "toolkit": "0.6.12"
+  },
+  "description": "",
+  "scripts": {
+    "build": "hap build",
+    "release": "hap release",
+    "server": "hap server",
+    "watch": "hap watch",
+    "build:test": "NODE_TEST=Y npm run build -- --devtool=source-map --enable-e2e --match-sourcemap",
+    "watch:test": "NODE_TEST=Y npm run watch -- --devtool=source-map --enable-e2e --match-sourcemap"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.8.0",
+    "eslint-plugin-hybrid": "0.0.5",
+    "hap-toolkit": "^0.6.12",
+    "quickapp-dsls": "^0.1.1"
+  },
+  "dependencies": {
+    "hybrid-chai": "0.0.1",
+    "hybrid-mocha": "0.0.2"
+  }
+}

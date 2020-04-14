@@ -1,0 +1,59 @@
+<template>
+  <!-- template里只能有一个根节点 -->
+  <div class="demo-page">
+    <text class="title">{{text}}</text>
+  </div>
+</template>
+
+<script>
+  import storage from '@system.storage'
+
+  export default {
+    public: {
+      text: '欢迎打开详情页',
+      caseTitle: null,
+      // 外部参数
+      externalString: null,
+      // 测试事件
+      dataForEventType: null
+    },
+    /**
+     * 当用户点击菜单按钮时触发，调用app中定义的方法showMenu
+     * 注意：使用加载器测试`创建桌面快捷方式`功能时，请先在`系统设置`中打开`应用加载器`的`桌面快捷方式`权限
+     */
+    methods: {
+      onEvtClick (evt) {
+        this.dataForEventType = evt.type
+      },
+      invokeStorageSet () {
+        storage.set({
+          key: 'k1',
+          value: 'v1'
+        })
+      },
+      invokeStorageGet (fn) {
+        storage.get({
+          key: 'k1',
+          complete: fn
+        })
+      }
+    },
+    onMenuPress() {
+      this.$app.$def.showMenu()
+    }
+  }
+</script>
+
+<style>
+  .demo-page {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .title {
+    font-size: 40px;
+    text-align: center;
+  }
+</style>
